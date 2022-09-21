@@ -6,6 +6,40 @@ Demo app for Android hardware TEE KeyStore key import. Shows how to import a key
 
 NOTE: For ease of the Demo there is no separate server component here in the project. But the "server-side" is written in such way that it is separated from the client code and has explicit handoffs between server and client. So it will be easy to move that part to an actual server and communicate via HTTPS.
 
+# Running it
+
+There are the following options
+
+## A. Take a build from GitHub releases
+
+1. Take the latest debug build from GitHub releases.
+   1. Releases: https://github.com/LabMobi/HardwareKeyImportDemoAndroid/releases
+      1. You can direct-download or scan a download QR there.
+
+2. Install it
+3. Run it via "Run full key import test" button
+
+## B1. Clone and compile yourself via Android Studio
+
+1. Clone the repository
+2. Switch to master branch
+3. Compile and run the debug build variant
+4. Run it via "Run full key import test" button
+
+## B2.Clone and compile from command line
+
+1. Clone the repository
+
+2. Switch to master branch
+
+3. Install via Gradle:
+
+   ```bash
+   .\gradlew installDebug
+   ```
+
+4. Run it via "Run full key import test" button
+
 # Main demo
 
 Usable via button `Run full key import test` in the demo
@@ -56,37 +90,6 @@ Useful to validate access to the imported key in different situations. For apps 
 ## Optional: Test the usage of the wrapping (RSA) key again after it been imported and tested once.
 
 Useful to validate access to the wrapping key in different situations. For apps with different identities (no access) or after a cycle of install-import-uninstall-reinstall (key gets removed during uninstall).
-
-# Running it
-
-There are the following options
-
-## Take a build from GitHub releases
-
-1. Take the latest debug build from GitHub releases.
-2. Install it
-3. Run it via "Run full key import test" button
-
-## Compile yourself via Android Studio
-
-1. Clone
-2. Switch to master branch
-3. Compile and run the debug build variant
-4. Run it via "Run full key import test" button
-
-## Install from command line
-
-1. Clone
-
-2. Switch to master branch
-
-3. Install via Gradle:
-
-   ```bash
-   .\gradlew installDebug
-   ```
-
-4. Run it via "Run full key import test" button
 
 # Sharing results
 
