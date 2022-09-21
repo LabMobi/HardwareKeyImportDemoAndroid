@@ -26,7 +26,7 @@ There are the following options
 3. Compile and run the debug build variant
 4. Run it via `Run full key import test` button
 
-## B2.Clone and compile from command line
+## B2. Clone and compile from command line
 
 1. Clone the repository
 
@@ -83,11 +83,11 @@ See the `mobi.lab.keyimportdemo.infrastructure.crypto.CryptoClient` class for th
 
 Usable via buttons `Use imported key` and `Use wrapping key` in the demo.
 
-## Optional: Test the usage of the imported (AES) key again after it been imported and tested once.
+## Optional: Test the usage of the imported (AES) key again after it been imported and tested once
 
 Useful to validate access to the imported key in different situations. For apps with different identities (no access) or after a cycle of install-import-uninstall-reinstall (key gets removed during uninstall).
 
-## Optional: Test the usage of the wrapping (RSA) key again after it been imported and tested once.
+## Optional: Test the usage of the wrapping (RSA) key again after it been imported and tested once
 
 Useful to validate access to the wrapping key in different situations. For apps with different identities (no access) or after a cycle of install-import-uninstall-reinstall (key gets removed during uninstall).
 
