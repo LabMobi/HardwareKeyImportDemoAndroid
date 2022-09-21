@@ -1,0 +1,5 @@
+rootProject.name = 'Key Import Demo'
+include ':app',
+        ':app-domain',
+        ':app-infrastructure',
+        ':app-common'

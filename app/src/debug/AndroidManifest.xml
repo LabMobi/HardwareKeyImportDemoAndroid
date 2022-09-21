@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="mobi.lab.keyimportdemo">
+
+    <application>
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="true" />
+
+        <activity
+            android:name="mobi.lab.scrolls.activity.LogListActivity"
+            android:exported="false"
+            android:label="keyimportdemo Logs"
+            android:taskAffinity="mobi.lab.keyimportdemo.loglist"
+            android:theme="@style/AppTheme"/>
+        <activity
+            android:name="mobi.lab.scrolls.activity.LogPostActivity"
+            android:exported="false"
+            android:process=".LogPostProcess"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name="mobi.lab.scrolls.activity.LogReaderActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name="mobi.lab.keyimportdemo.debug.DebugActivity"
+            android:theme="@style/AppTheme" />
+
+        <provider
+            android:name="mobi.lab.scrolls.ScrollsFileProvider"
+            android:authorities="${applicationId}.logs"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
+    </application>
+</manifest>
+

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Key Import Demo</string>
+    <string name="notification_channel_name">Notifications</string>
+    <string name="title_error">Error</string>
+    <string name="text_splash">The development of this product is running.</string>
+    <string name="title_email">Email</string>
+    <string name="title_password">Password</string>
+    <string name="title_login">Login</string>
+    <string name="text_required">Required</string>
+    <string name="text_experience_prototype">Key Import Demo</string>
+    <string name="text_experience_prototype_description">Tap on the button below to run the key import and Hello World message decryption test.</string>
+    <string name="title_run_key_import_test">Run full key import test</string>
+    <string name="title_run_imported_key_usage_test">Use imported key</string>
+    <string name="title_run_wrapping_key_usage_test">Use wrapping key</string>
+    <string name="title_logout">Log out</string>
+    <string name="title_debug">Debug menu</string>
+
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_no_network">Connection error. Please try again.</string>
+    <string name="text_status_start">Click to start</string>
+    <string name="text_status_running">Import in progress ..</string>
+    <string name="text_status_success_strongbox_tee">Import success: Hardware Strongbox TEE</string>
+    <string name="text_status_success_hardware_tee_no_strongbox">Import success: Hardware TEE (not Strongbox)</string>
+    <string name="text_status_success_software_tee_only">Import success: Software TEE only</string>
+    <string name="text_status_success_unknown_tee">Import success: Unknown TEE only</string>
+    <string name="text_status_failed">Import failed! See the trace below.</string>
+    <string name="text_status_decrypt_failed">Test failed. Decryption result different, see trace.</string>
+    <string name="text_status_failed_no_key_import_support_on_this_api_level">Import failed: No import support on this API level</string>
+    <string name="text_status_failed_no_key_import_support_available_on_this_device">Import failed: No import support available on this device</string>
+    <string name="title_share">Share</string>
+    <string name="text_title_share_results">Share Key Import Demo results</string>
+    <string name="text_status_test_in_progress">Test in progress ..</string>
+    <string name="text_status_test_not_started">Test not started!</string>
+    <string name="text_status_success_local_key_usage">Local key usage successful!</string>
+    <string name="text_status_local_key_usage_failed_no_such_key">Failed: No such key. Was it not generated or removed?</string>
+</resources>

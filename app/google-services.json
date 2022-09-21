@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "57393308875",
+    "project_id": "key-import-demo",
+    "storage_bucket": "key-import-demo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:57393308875:android:1ac0c254fc3a07cf5a674e",
+        "android_client_info": {
+          "package_name": "mobi.lab.keyimportdemo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "57393308875-jshjlk1t6gr1j7d3qb8rt9k5t66i0eif.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAR948o6p0xRhPIUOWkjDIgshJJr0xms4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "57393308875-jshjlk1t6gr1j7d3qb8rt9k5t66i0eif.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

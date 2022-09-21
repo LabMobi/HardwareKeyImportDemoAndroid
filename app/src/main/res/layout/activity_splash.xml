@@ -1,0 +1,37 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!--SPLASH SCREENS SHOULD NOT BE IMPLEMENTED WITH AN IMAGEVIEW-->
+    <!--The ImageView implementation here is necessary because we can't show the paintbucket image as-->
+    <!--window background and align it properly. Look at @style/AppTheme.Splash and windowBackground.-->
+    <!--A splash screen's image should be set as a window background instead of an ImageView in the layout-->
+    <ImageView
+        android:id="@+id/splash_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/img_paintbucket"
+        app:tint="@color/primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/splash_txt_welcome"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintVertical_bias="0.6" />
+
+    <TextView
+        android:id="@+id/splash_txt_welcome"
+        style="@style/Text.Heading"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/size_48"
+        android:layout_marginEnd="@dimen/size_48"
+        android:layout_marginTop="@dimen/size_48"
+        android:text="@string/text_splash"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/splash_img" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
