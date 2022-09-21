@@ -24,7 +24,7 @@ There are the following options
 1. Clone the repository
 2. Switch to master branch
 3. Compile and run the debug build variant
-4. Run it via "Run full key import test" button
+4. Run it via `Run full key import test` button
 
 ## B2.Clone and compile from command line
 
@@ -112,10 +112,32 @@ NOTE: The full shared data is also written to Android Logcat after the share but
 - Client part: **app-infrastructure/**src/main/java/mobi/lab/keyimportdemo/infrastructure/crypto/CryptoClient.kt
 - Server part: **app-infrastructure/**src/main/java/mobi/lab/keyimportdemo/infrastructure/crypto/CryptoServer.kt
 
+
+
+# Building code
+
+Full build can be done via:
+
+```bash
+.\gradlew buildAllRelease
+```
+
+This builds all variants and runs all linters.
+
+Code linters (Detekt, ktlint) can be also ran separately via:
+
+```
+.\gradlew checkCode
+```
+
+NOTE: This skips the Android Lint as that takes a long time to run and rarely has something to say.
+
 # Contact
 
-Mobi Lab
+## Mobi Lab
 
 Email: hello@lab.mobi
+
+Twitter: https://mobile.twitter.com/LabMobi
 
 Web: https://lab.mobi/
