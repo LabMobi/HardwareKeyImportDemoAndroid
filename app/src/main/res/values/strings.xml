@@ -19,10 +19,7 @@
     <string name="error_no_network">Connection error. Please try again.</string>
     <string name="text_status_start">Click to start</string>
     <string name="text_status_running">Import in progress ..</string>
-    <string name="text_status_success_strongbox_tee">Import success: Hardware Strongbox TEE</string>
-    <string name="text_status_success_hardware_tee_no_strongbox">Import success: Hardware TEE (not Strongbox)</string>
     <string name="text_status_key_import_success">Key Import success.</string>
-    <string name="text_status_success_unknown_tee">Import success: Unknown TEE only</string>
     <string name="text_status_key_import_failed">Import failed! See the trace below.</string>
     <string name="text_status_decrypt_failed">Test failed. Decryption result different, see trace.</string>
     <string name="text_status_failed_no_key_import_support_on_this_api_level">Import failed: No import support on this API level</string>
@@ -32,10 +29,10 @@
     <string name="text_status_test_in_progress">Test in progress ..</string>
     <string name="text_status_test_not_started">Test not started!</string>
     <string name="text_status_success_key_usage">Key usage success.</string>
-    <string name="text_status_local_key_usage_failed_no_such_key">Failed: No such key. Was it not generated or removed?</string>
+    <string name="text_status_local_key_usage_failed_no_such_key">Failed: No such key. Not generated? Removed?</string>
     <string name="text_key_level_hardware_tee_no_strongbox">Hardware TEE No Strongbox</string>
     <string name="text_key_level_software_tee_only">Software TEE only</string>
-    <string name="text_key_level_hardware_strongboc_tee">Hardware StrongBox TEE</string>
+    <string name="text_key_level_hardware_strongbox_tee">Hardware StrongBox TEE</string>
     <string name="text_key_level_unknown_tee">Unknown TEE</string>
     <string name="text_status_key_usage_failed">Key usage failed! See the trace below.</string>
 </resources>

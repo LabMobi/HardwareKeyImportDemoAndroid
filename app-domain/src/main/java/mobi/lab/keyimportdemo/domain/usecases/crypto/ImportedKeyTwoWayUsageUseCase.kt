@@ -26,16 +26,19 @@ class ImportedKeyTwoWayUsageUseCase @Inject constructor(
     }
 
     private fun runTest(serverToClientSecretMessage: String, clientToServerSecretMessage: String): KeyUsageTestResult {
-        log.d("Local usage test started")
+        log.d("Usage test started")
 
         return try {
-            log.d("Testing server -> client message flow ..")
-            val serverToClientSecretMessageResult = runTestServerEncryptCryptAndClientDecryptJweWithTek(serverToClientSecretMessage)
-            log.d("Testing server -> client message flow test finished")
 
             log.d("Testing client -> server message flow ..")
             val clientToServerSecretMessageResult = runTestClientEncryptCryptAndServerDecryptJweWithTek(clientToServerSecretMessage)
             log.d("Testing client -> server message flow test finished")
+
+            log.d("Testing server -> client message flow ..")
+            val serverToClientSecretMessageResult = runTestServerEncryptCryptAndClientDecryptJweWithTek(serverToClientSecretMessage)
+            log.d("Testing server -> client message flow test finished")
+
+
 
             KeyUsageTestResult.UsageSuccess(
                 client.getPrivateKeySecurityLevel(DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS),

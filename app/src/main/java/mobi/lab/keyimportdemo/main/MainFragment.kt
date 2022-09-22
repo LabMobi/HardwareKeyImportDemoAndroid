@@ -136,7 +136,7 @@ class MainFragment : BaseMvvmFragment(), ViewBindingHolder<FragmentMainBinding> 
         return when (teeLevel) {
             UIKeyTeeSecurityLevel.TeeHardwareNoStrongbox -> getString(R.string.text_key_level_hardware_tee_no_strongbox)
             UIKeyTeeSecurityLevel.TeeSoftware -> getString(R.string.text_key_level_software_tee_only)
-            UIKeyTeeSecurityLevel.TeeStrongbox -> getString(R.string.text_key_level_hardware_strongboc_tee)
+            UIKeyTeeSecurityLevel.TeeStrongbox -> getString(R.string.text_key_level_hardware_strongbox_tee)
             UIKeyTeeSecurityLevel.Unknown -> getString(R.string.text_key_level_unknown_tee)
         }.exhaustive
     }
