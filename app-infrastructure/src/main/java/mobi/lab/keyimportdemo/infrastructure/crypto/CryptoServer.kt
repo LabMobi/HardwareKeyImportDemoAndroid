@@ -144,10 +144,10 @@ class CryptoServer @Inject constructor() : CryptoServerGateway {
 
     override fun encryptMessageWithTekToJWE(message: String, tekAesKeyAtServer: SecretKeySpec): String {
         // Create the header
-        //  (“enc”=”A128CBC-HS256”, “alg”=”dir”),
-        // https://bitbucket.org/connect2id/nimbus-jose-jwt/issues/490/jwe-with-shared-key-support-for-android
-        val header = JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A128CBC_HS256)
-        // Set the plain text
+        // Uses GCM for now,
+        // for more info see https://bitbucket.org/connect2id/nimbus-jose-jwt/issues/490/jwe-with-shared-key-support-for-android
+        val header = JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A256GCM)
+        // Set the message as payload plain text
         val payload = Payload(message)
 
         // Create the JWE object and encrypt it

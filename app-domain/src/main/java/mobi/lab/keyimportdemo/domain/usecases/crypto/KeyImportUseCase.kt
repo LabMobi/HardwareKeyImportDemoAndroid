@@ -102,25 +102,26 @@ class KeyImportUseCase @Inject constructor(
             return KeyImportTestResult.FailedTestDecryptionResultDifferentThanInput
         }
 
-        // TODO SMAR-1587: Test 2
         // Encrypt a message at server with TEK using JWE format and encode as Base64
-        // runTestCryptJweWithTekAtServer(serverStorage)
-        //
-        // // Handoff
-        // log.d("HANDOFF: Server outputs the TEK JWE encrypted message as Base64 encoded string ..")
-        // clientStorage.messageTekEncryptedJweEncodedBase64 = serverStorage.messageTekEncryptedJweEncodedBase64
-        // log.d("String: ${clientStorage.messageTekEncryptedJweEncodedBase64}")
-        // log.d("HANDOFF: Server outputs the TEK JWE encrypted message as Base64 encoded string - success")
+        runTestCryptJweWithTekAtServer(serverStorage)
+
+        // Handoff
+        log.d("HANDOFF: Server outputs the TEK JWE encrypted message as Base64 encoded string ..")
+        clientStorage.messageTekEncryptedJweEncodedBase64 = serverStorage.messageTekEncryptedJweEncodedBase64
+        log.d("String: ${clientStorage.messageTekEncryptedJweEncodedBase64}")
+        log.d("HANDOFF: Server outputs the TEK JWE encrypted message as Base64 encoded string - success")
 
         // Decrypt at client with imported key
-        // runTestDecryptJweWithImportedKeyAtClient(clientStorage)
+        runTestDecryptJweWithImportedKeyAtClient(clientStorage)
 
         // Test 2: compare the input and output
-        // if (serverStorage.serverSecretMessageAtServer != clientStorage.decryptedServerJweMessage) {
-        //     log.d("Test 2 decryption result \"${clientStorage.decryptedServerTextMessage}\" different " +
-        //         "than the server string \"${clientStorage.decryptedServerJweMessage}\".")
-        //     return KeyImportTestResult.FailedTestDecryptionResultDifferentThanInput
-        // }
+        if (serverStorage.serverSecretMessageAtServer != clientStorage.decryptedServerJweMessage) {
+            log.d(
+                "Test 2 decryption result \"${clientStorage.decryptedServerTextMessage}\" different " +
+                    "than the server string \"${clientStorage.decryptedServerJweMessage}\"."
+            )
+            return KeyImportTestResult.FailedTestDecryptionResultDifferentThanInput
+        }
 
         log.d("Import finished")
         return getKeyFinalType(clientStorage)

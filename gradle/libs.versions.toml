@@ -89,6 +89,5 @@ test-androidx-junit = 'androidx.test.ext:junit:1.1.3'
 test-espresso-core = 'androidx.test.espresso:espresso-core:3.4.0'
 
 # Crypto
-nimbus = 'com.nimbusds:nimbus-jose-jwt:9.23'
-# bouncycastle = 'org.bouncycastle:bcpkix-jdk15to18:1.68'
+nimbus = 'com.nimbusds:nimbus-jose-jwt:9.25.1'
 bouncycastle= 'org.bouncycastle:bcprov-jdk16:1.46'
