@@ -9,13 +9,11 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import io.reactivex.rxjava3.plugins.RxJavaPlugins
 import mobi.lab.keyimportdemo.common.logging.CrashlyticsTree
 import mobi.lab.keyimportdemo.common.logging.ScrollsTree
-import mobi.lab.keyimportdemo.common.platform.LogoutMonitor
 import mobi.lab.keyimportdemo.common.platform.MyNotificationManager
 import mobi.lab.keyimportdemo.common.util.isCrashlyticsEnabled
 import mobi.lab.keyimportdemo.common.util.isDebugBuild
 import mobi.lab.keyimportdemo.di.Injector
 import mobi.lab.keyimportdemo.domain.storage.SessionStorage
-import mobi.lab.keyimportdemo.domain.usecases.auth.DeleteSessionUseCase
 import mobi.lab.keyimportdemo.infrastructure.common.platform.AppEnvironment
 import mobi.lab.keyimportdemo.infrastructure.common.platform.ImageLoader
 import mobi.lab.scrolls.LogPost
@@ -28,7 +26,6 @@ class App : Application() {
 
     @Inject lateinit var environment: AppEnvironment
     @Inject lateinit var sessionStorage: SessionStorage
-    @Inject lateinit var deleteSessionUseCase: DeleteSessionUseCase
 
     @SuppressLint("LogNotTimber")
     override fun onCreate() {
@@ -48,7 +45,6 @@ class App : Application() {
         Injector.buildGraph(this)
         Injector.inject(this)
 
-        LogoutMonitor.init(this, deleteSessionUseCase)
         MyNotificationManager.newInstance(this).createChannels()
         ImageLoader.configure(this, environment, sessionStorage)
     }

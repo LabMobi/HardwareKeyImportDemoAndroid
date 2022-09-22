@@ -5,6 +5,7 @@ import com.nimbusds.jose.JWEAlgorithm
 import com.nimbusds.jose.JWEHeader
 import com.nimbusds.jose.JWEObject
 import com.nimbusds.jose.Payload
+import com.nimbusds.jose.crypto.DirectDecrypter
 import com.nimbusds.jose.crypto.DirectEncrypter
 import com.nimbusds.jose.jwk.JWK
 import mobi.lab.keyimportdemo.domain.gateway.CryptoServerGateway
@@ -158,10 +159,12 @@ class CryptoServer @Inject constructor() : CryptoServerGateway {
         return jweObject.serialize()
     }
 
-    override fun encryptMessageWithTek(message: String, tekAesKeyAtServer: SecretKeySpec): ByteArray {
-        val c: Cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-        c.init(Cipher.ENCRYPT_MODE, tekAesKeyAtServer)
-        return c.iv + c.doFinal(message.toByteArray())
+    override fun decryptJWEWithImportedKey(messageWrappedTekEncryptedJWE: String, tekAesKeyAtServer: SecretKeySpec): String {
+        val decrypter = DirectDecrypter(tekAesKeyAtServer)
+
+        val jweObject = JWEObject.parse(messageWrappedTekEncryptedJWE)
+        jweObject.decrypt(decrypter)
+        return jweObject.payload.toString()
     }
 
     companion object {

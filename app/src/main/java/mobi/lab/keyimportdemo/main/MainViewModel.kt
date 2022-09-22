@@ -11,11 +11,11 @@ import mobi.lab.keyimportdemo.common.rx.SchedulerProvider
 import mobi.lab.keyimportdemo.common.util.asLiveData
 import mobi.lab.keyimportdemo.common.util.dispose
 import mobi.lab.keyimportdemo.domain.entities.KeyImportTestResult
-import mobi.lab.keyimportdemo.domain.entities.KeyLocalUsageTestResult
+import mobi.lab.keyimportdemo.domain.entities.KeyUsageTestResult
+import mobi.lab.keyimportdemo.domain.gateway.CryptoClientGateway
 import mobi.lab.keyimportdemo.domain.gateway.LoggerGateway
+import mobi.lab.keyimportdemo.domain.usecases.crypto.ImportedKeyTwoWayUsageUseCase
 import mobi.lab.keyimportdemo.domain.usecases.crypto.KeyImportUseCase
-import mobi.lab.keyimportdemo.domain.usecases.crypto.ImportedKeyLocalUsageUseCase
-import mobi.lab.keyimportdemo.domain.usecases.crypto.WrappingKeyLocalUsageUseCase
 import mobi.lab.mvvm.SingleEvent
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -23,8 +23,7 @@ import javax.inject.Inject
 
 class MainViewModel @Inject constructor(
     private val keyImportUseCase: KeyImportUseCase,
-    private val importedKeyLocalUsageUseCase: ImportedKeyLocalUsageUseCase,
-    private val wrappingKeyLocalUsageUseCase: WrappingKeyLocalUsageUseCase,
+    private val importedKeyTwoWayUsageUseCase: ImportedKeyTwoWayUsageUseCase,
     private val schedulers: SchedulerProvider,
     private val logger: LoggerGateway
 ) : BaseViewModel(), LoggerGateway.LoggerGatewayListener {
@@ -49,17 +48,17 @@ class MainViewModel @Inject constructor(
 
     fun onRunKeyImportTestClicked() {
         logger.clearLog()
-        updateState { it.copy(status = TestStatus.InProgress) }
+        updateState { it.copy(status = UiTestStatus.InProgress) }
         dispose(disposable)
         disposable = keyImportUseCase
-            .execute("Hello world! The date and time is ${formatCurrentTime()}")
+            .execute(createServerMessage(), createClientMessage())
             .compose(schedulers.single(Schedulers.computation(), AndroidSchedulers.mainThread()))
             .subscribe(::onKeyImportTestSuccess, ::onKeyImportTestFailed)
     }
 
     private fun onKeyImportTestFailed(error: Throwable) {
         logger.d("onKeyImportTestFailed: ${Log.getStackTraceString(error)}")
-        updateState { it.copy(status = TestStatus.FailedGeneric(error)) }
+        updateState { it.copy(status = UiTestStatus.FailedImportGeneric(error)) }
     }
 
     private fun onKeyImportTestSuccess(result: KeyImportTestResult) {
@@ -69,30 +68,24 @@ class MainViewModel @Inject constructor(
 
     fun onRunImportKeyUsageTestClicked() {
         logger.clearLog()
-        updateState { it.copy(status = TestStatus.InProgress) }
+        updateState { it.copy(status = UiTestStatus.InProgress) }
         dispose(disposable)
-        disposable = importedKeyLocalUsageUseCase
-            .execute("Hello world! The date and time is ${formatCurrentTime()}")
+        disposable = importedKeyTwoWayUsageUseCase
+            .execute(createServerMessage(), createClientMessage())
             .compose(schedulers.single(Schedulers.computation(), AndroidSchedulers.mainThread()))
             .subscribe(::onKeyLocalUsageTestSuccess, ::onKeyLocalUsageTestFailed)
     }
 
-    fun onRunWrappingKeyUsageTestClicked() {
-        logger.clearLog()
-        updateState { it.copy(status = TestStatus.InProgress) }
-        dispose(disposable)
-        disposable = wrappingKeyLocalUsageUseCase
-            .execute("Hello world! The date and time is ${formatCurrentTime()}")
-            .compose(schedulers.single(Schedulers.computation(), AndroidSchedulers.mainThread()))
-            .subscribe(::onKeyLocalUsageTestSuccess, ::onKeyLocalUsageTestFailed)
-    }
+    private fun createServerMessage() = "Hello from Server! The date and time is ${formatCurrentTime()}"
+
+    private fun createClientMessage() = "Hello from Client! The date and time is ${formatCurrentTime()}"
 
     private fun onKeyLocalUsageTestFailed(error: Throwable) {
         logger.d("onKeyLocalUsageTestFailed: ${Log.getStackTraceString(error)}")
-        updateState { it.copy(status = TestStatus.FailedGeneric(error)) }
+        updateState { it.copy(status = UiTestStatus.FailedUsageGeneric(error)) }
     }
 
-    private fun onKeyLocalUsageTestSuccess(result: KeyLocalUsageTestResult) {
+    private fun onKeyLocalUsageTestSuccess(result: KeyUsageTestResult) {
         logger.d("onKeyLocalUsageTestSuccess: $result")
         updateState { it.copy(status = mapResult(result)) }
     }
@@ -111,21 +104,26 @@ class MainViewModel @Inject constructor(
     }
 
     private fun startShare() {
-        when (state.value?.status ?: TestStatus.NotStated) {
-            is TestStatus.FailedGeneric,
-            TestStatus.FailedKeyImportNotAvailableOnThisDevice,
-            TestStatus.FailedKeyImportNotSupportedOnThisApiLevel,
-            TestStatus.FailedLocalKeyUsageNoSuchKey,
-            TestStatus.FailedTestDecryptionResultDifferentThanInput -> {
+        val status = state.value?.status ?: UiTestStatus.NotStated
+        when (status) {
+            is UiTestStatus.FailedImportGeneric,
+            is UiTestStatus.FailedUsageGeneric,
+            UiTestStatus.FailedKeyImportNotAvailableOnThisDevice,
+            UiTestStatus.FailedKeyImportNotSupportedOnThisApiLevel,
+            UiTestStatus.FailedKeyUsageNoSuchKey,
+            UiTestStatus.FailedTestDecryptionResultDifferentThanInput -> {
                 shareResultAndLog(state.value ?: defaultState())
             }
-            TestStatus.InProgress,
-            TestStatus.NotStated,
-            is TestStatus.SuccessHardwareTeeNoStrongbox,
-            is TestStatus.SuccessSoftwareTeeOnly,
-            is TestStatus.SuccessStrongboxTee,
-            is TestStatus.SuccessLocalKeyUsage,
-            is TestStatus.SuccessUnknownTeeOnly -> {
+            UiTestStatus.InProgress,
+            UiTestStatus.NotStated,
+            is UiTestStatus.SuccessKeyUsage -> {
+                shareResultOnly(state.value ?: defaultState())
+            }
+            is UiTestStatus.SuccessKeyImportAndUsage -> {
+                if (status.keyUsageStatus !is UiTestStatus.SuccessKeyUsage) {
+                    shareResultAndLog(state.value ?: defaultState())
+                    return
+                }
                 shareResultOnly(state.value ?: defaultState())
             }
         }.exhaustive
@@ -140,7 +138,7 @@ class MainViewModel @Inject constructor(
     }
 
     private fun defaultState(): State {
-        return State(TestStatus.NotStated, ArrayList())
+        return State(UiTestStatus.NotStated, ArrayList())
     }
 
     private fun updateState(function: (State) -> State) {
@@ -151,23 +149,33 @@ class MainViewModel @Inject constructor(
         return _state.value ?: defaultState()
     }
 
-    private fun mapResult(result: KeyImportTestResult): TestStatus {
+    private fun mapResult(result: KeyImportTestResult): UiTestStatus {
         return when (result) {
-            KeyImportTestResult.FailedKeyImportNotSupportedOnThisApiLevel -> TestStatus.FailedKeyImportNotSupportedOnThisApiLevel
-            KeyImportTestResult.FailedKeyImportNotAvailableOnThisDevice -> TestStatus.FailedKeyImportNotAvailableOnThisDevice
-            KeyImportTestResult.FailedTestDecryptionResultDifferentThanInput -> TestStatus.FailedTestDecryptionResultDifferentThanInput
-            is KeyImportTestResult.SuccessHardwareTeeStrongBox -> TestStatus.SuccessStrongboxTee(result.message)
-            is KeyImportTestResult.SuccessHardwareTeeNoStrongbox -> TestStatus.SuccessHardwareTeeNoStrongbox(result.message)
-            is KeyImportTestResult.SuccessSoftwareTeeOnly -> TestStatus.SuccessSoftwareTeeOnly(result.message)
-            is KeyImportTestResult.SuccessTeeUnknown -> TestStatus.SuccessUnknownTeeOnly(result.message)
+            KeyImportTestResult.FailedKeyImportNotSupportedOnThisApiLevel -> UiTestStatus.FailedKeyImportNotSupportedOnThisApiLevel
+            KeyImportTestResult.FailedKeyImportNotAvailableOnThisDevice -> UiTestStatus.FailedKeyImportNotAvailableOnThisDevice
+            KeyImportTestResult.FailedTestDecryptionResultDifferentThanInput -> UiTestStatus.FailedTestDecryptionResultDifferentThanInput
+            is KeyImportTestResult.Success -> UiTestStatus.SuccessKeyImportAndUsage(mapResult(result.keyTestResult))
         }.exhaustive
     }
 
-    private fun mapResult(result: KeyLocalUsageTestResult): TestStatus {
+    private fun mapResult(result: KeyUsageTestResult): UiTestStatus {
         return when (result) {
-            is KeyLocalUsageTestResult.UsageFailedGeneric -> TestStatus.FailedGeneric(result.throwable)
-            KeyLocalUsageTestResult.UsageFailedNoSuchKey -> TestStatus.FailedLocalKeyUsageNoSuchKey
-            is KeyLocalUsageTestResult.UsageSuccess -> TestStatus.SuccessLocalKeyUsage(result.message)
+            is KeyUsageTestResult.UsageFailedGeneric -> UiTestStatus.FailedUsageGeneric(result.throwable)
+            KeyUsageTestResult.UsageFailedNoSuchKey -> UiTestStatus.FailedKeyUsageNoSuchKey
+            is KeyUsageTestResult.UsageSuccess -> UiTestStatus.SuccessKeyUsage(
+                mapResult(result.keyLevel),
+                result.serverToClientMessage,
+                result.clientToServerMessage
+            )
+        }.exhaustive
+    }
+
+    private fun mapResult(keyLevel: CryptoClientGateway.KeyTeeSecurityLevel): UIKeyTeeSecurityLevel {
+        return when (keyLevel) {
+            CryptoClientGateway.KeyTeeSecurityLevel.TeeHardwareNoStrongbox -> UIKeyTeeSecurityLevel.TeeHardwareNoStrongbox
+            CryptoClientGateway.KeyTeeSecurityLevel.TeeSoftware -> UIKeyTeeSecurityLevel.TeeSoftware
+            CryptoClientGateway.KeyTeeSecurityLevel.TeeStrongbox -> UIKeyTeeSecurityLevel.TeeStrongbox
+            CryptoClientGateway.KeyTeeSecurityLevel.Unknown -> UIKeyTeeSecurityLevel.Unknown
         }.exhaustive
     }
 
@@ -178,7 +186,7 @@ class MainViewModel @Inject constructor(
         data class ShareResultAndLog(val state: State) : Action()
     }
 
-    data class State(val status: TestStatus, val logLines: List<CharSequence>)
+    data class State(val status: UiTestStatus, val logLines: List<CharSequence>)
 
     override fun onLogLinesUpdated(logLines: List<CharSequence>) {
         updateState { it.copy(logLines = ArrayList(logLines)) }

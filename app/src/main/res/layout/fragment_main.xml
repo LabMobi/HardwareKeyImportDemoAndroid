@@ -37,7 +37,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@id/guide_end"
         app:layout_constraintStart_toStartOf="@id/guide_start"
-        app:layout_constraintTop_toBottomOf="@id/button_start_test_wrapping_key_usage">
+        app:layout_constraintTop_toBottomOf="@id/button_start_test_import_key_usage">
 
         <TextView
             android:id="@+id/text_log"
@@ -53,11 +53,11 @@
         style="@style/Text.Heading"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:padding="@dimen/size_4"
-        android:minLines="3"
         android:layout_marginTop="@dimen/size_16"
-        android:text="@string/text_status_start"
         android:gravity="center"
+        android:minLines="3"
+        android:padding="@dimen/size_4"
+        android:text="@string/text_status_start"
         app:layout_constraintBottom_toTopOf="@id/button_start_test"
         app:layout_constraintEnd_toEndOf="@id/guide_end"
         app:layout_constraintStart_toStartOf="@id/guide_start"
@@ -82,22 +82,10 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/size_8"
         android:text="@string/title_run_imported_key_usage_test"
-        app:layout_constraintBottom_toTopOf="@id/button_start_test_wrapping_key_usage"
-        app:layout_constraintEnd_toEndOf="@id/guide_end"
-        app:layout_constraintStart_toStartOf="@id/guide_start"
-        app:layout_constraintTop_toBottomOf="@id/button_start_test" />
-
-    <mobi.lab.progressbutton.ProgressButton
-        android:id="@+id/button_start_test_wrapping_key_usage"
-        style="@style/Button.Secondary"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/size_8"
-        android:text="@string/title_run_wrapping_key_usage_test"
         app:layout_constraintBottom_toTopOf="@id/scrollview"
         app:layout_constraintEnd_toEndOf="@id/guide_end"
         app:layout_constraintStart_toStartOf="@id/guide_start"
-        app:layout_constraintTop_toBottomOf="@id/button_start_test_import_key_usage" />
+        app:layout_constraintTop_toBottomOf="@id/button_start_test" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

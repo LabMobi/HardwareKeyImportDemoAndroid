@@ -5,9 +5,9 @@ import android.security.keystore.SecureKeyImportUnavailableException
 import androidx.annotation.RequiresApi
 import dagger.Reusable
 import io.reactivex.rxjava3.core.Single
-import mobi.lab.keyimportdemo.app.common.exhaustive
 import mobi.lab.keyimportdemo.domain.DomainConstants
 import mobi.lab.keyimportdemo.domain.entities.KeyImportTestResult
+import mobi.lab.keyimportdemo.domain.entities.KeyUsageTestResult
 import mobi.lab.keyimportdemo.domain.gateway.CryptoClientGateway
 import mobi.lab.keyimportdemo.domain.gateway.CryptoServerGateway
 import mobi.lab.keyimportdemo.domain.gateway.LoggerGateway
@@ -24,9 +24,11 @@ class KeyImportUseCase @Inject constructor(
     private val client: CryptoClientGateway,
     private val server: CryptoServerGateway,
     private val log: LoggerGateway,
+    private val saveServerSecretKeyUseCase: SaveServerSecretKeyUseCase,
+    private val importedKeyTwoWayUsageUseCase: ImportedKeyTwoWayUsageUseCase
 ) : UseCase() {
-    fun execute(inputMessage: String): Single<KeyImportTestResult> {
-        return Single.fromCallable { runTest(inputMessage) }
+    fun execute(serverSecretMessage: String, clientSecretMessage: String): Single<KeyImportTestResult> {
+        return Single.fromCallable { runTest(serverSecretMessage, clientSecretMessage) }
     }
 
     /**
@@ -40,7 +42,7 @@ class KeyImportUseCase @Inject constructor(
      * Finally, the key exchange result is tested by the server encrypting a message and the client decrypting it.
      */
     @Suppress("LongMethod", "ReturnCount")
-    private fun runTest(serverSecretMessageAtServer: String): KeyImportTestResult {
+    private fun runTest(serverSecretMessage: String, clientSecretMessage: String): KeyImportTestResult {
         log.d("Import started")
 
         // Storage accessible for "client".
@@ -48,7 +50,7 @@ class KeyImportUseCase @Inject constructor(
 
         // Storage accessible for "server"
         // In real word would be in the server instance.
-        val serverStorage = Storage.ServerSide(serverSecretMessageAtServer = serverSecretMessageAtServer)
+        val serverStorage = Storage.ServerSide()
 
         // Client: Client key init phase in Android TEE
         runTestClientKeyInitPhase(clientStorage)
@@ -80,84 +82,11 @@ class KeyImportUseCase @Inject constructor(
             return KeyImportTestResult.FailedKeyImportNotAvailableOnThisDevice
         }
 
-        // Test 1
-        // Test 1: Encrypt a message at server with TEK and return it as Base64 with the iv appended at the front (first 16 byes) of the cryptogram
-        runTestCryptTextWithTekAtServer(serverStorage)
-
-        // Test 1: Handoff client -> server
-        log.d("HANDOFF: Server outputs the TEK encrypted message as Base64 encoded string ..")
-        clientStorage.messageTekEncryptedEncodedBase64 = serverStorage.messageTekEncryptedEncodedBase64
-        log.d("String: ${clientStorage.messageTekEncryptedEncodedBase64}")
-        log.d("HANDOFF: Server outputs the TEK encrypted message as Base64 encoded string - success")
-
-        // Test 1: Decrypt at client with imported key
-        runTestDecryptTextWithImportedKeyAtClient(clientStorage)
-
-        // Test 1: compare the input and output
-        if (serverStorage.serverSecretMessageAtServer != clientStorage.decryptedServerTextMessage) {
-            log.d(
-                "Test 1 decryption result \"${clientStorage.decryptedServerTextMessage}\" different " +
-                    "than the server string \"${clientStorage.decryptedServerTextMessage}\"."
-            )
-            return KeyImportTestResult.FailedTestDecryptionResultDifferentThanInput
-        }
-
-        // Encrypt a message at server with TEK using JWE format and encode as Base64
-        runTestCryptJweWithTekAtServer(serverStorage)
-
-        // Handoff
-        log.d("HANDOFF: Server outputs the TEK JWE encrypted message as Base64 encoded string ..")
-        clientStorage.messageTekEncryptedJweEncodedBase64 = serverStorage.messageTekEncryptedJweEncodedBase64
-        log.d("String: ${clientStorage.messageTekEncryptedJweEncodedBase64}")
-        log.d("HANDOFF: Server outputs the TEK JWE encrypted message as Base64 encoded string - success")
-
-        // Decrypt at client with imported key
-        runTestDecryptJweWithImportedKeyAtClient(clientStorage)
-
-        // Test 2: compare the input and output
-        if (serverStorage.serverSecretMessageAtServer != clientStorage.decryptedServerJweMessage) {
-            log.d(
-                "Test 2 decryption result \"${clientStorage.decryptedServerTextMessage}\" different " +
-                    "than the server string \"${clientStorage.decryptedServerJweMessage}\"."
-            )
-            return KeyImportTestResult.FailedTestDecryptionResultDifferentThanInput
-        }
+        // Test messaging between the client and server both ways using the imported AES TEK
+        val keyTestResult = importedKeyTwoWayUsageUseCase.execute(serverSecretMessage, clientSecretMessage).blockingGet()
 
         log.d("Import finished")
-        return getKeyFinalType(clientStorage)
-    }
-
-    private fun runTestCryptJweWithTekAtServer(serverStorage: Storage.ServerSide) {
-        // Server key generation phase 9. Server uses TEK key to create JWE message with payload of “Hello world”
-        // and outputs it as Base64 encoded string.
-        log.d("SERVER: Encrypting the message with TEK to JWE ..")
-        val messageTekEncryptedJWEAtServer =
-            server.encryptMessageWithTekToJWE(serverStorage.serverSecretMessageAtServer, serverStorage.tekAesKeyAtServer)
-        log.d("SERVER: JWE: $messageTekEncryptedJWEAtServer")
-        log.d("SERVER: Encrypting the message with TEK to JWE - success")
-
-        // Encode to Base64
-        serverStorage.messageTekEncryptedJweEncodedBase64 =
-            String(
-                Base64.encode(messageTekEncryptedJWEAtServer.toByteArray(Charset.forName(BASE64_ENCODING_CHARSET_NAME))),
-                Charset.forName(BASE64_ENCODING_CHARSET_NAME)
-            )
-    }
-
-    private fun runTestDecryptJweWithImportedKeyAtClient(clientStorage: Storage.ClientSide) {
-        // Android key import phase 2. Android app loads the server encrypted JWE message.
-        log.d("CLIENT: Decode the server encrypted text message from Base64 ..")
-        val messageTekEncryptedJweString = String(
-            Base64.decode(clientStorage.messageTekEncryptedJweEncodedBase64), Charset.forName(BASE64_ENCODING_CHARSET_NAME)
-        )
-        log.d("CLIENT: JWE: $messageTekEncryptedJweString")
-        log.d("CLIENT: Decode the server encrypted text message from Base64 - success")
-
-        // Android key import phase 5. Android app uses the StrongBox protected key to decrypt the JWE message from server and outputs the payload.
-        log.d("CLIENT: Decrypt the Server's JWE message with the imported key ..")
-        clientStorage.decryptedServerJweMessage =
-            client.decryptJWEWithImportedWrappedKey(DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS, messageTekEncryptedJweString)
-        log.d("CLIENT: Decrypt the Server's JWE message with the imported key - SKIPPED")
+        return getKeyFinalType(keyTestResult)
     }
 
     private fun runTestClientKeyInitPhase(clientStorage: Storage.ClientSide) {
@@ -203,6 +132,9 @@ class KeyImportUseCase @Inject constructor(
         log.d("SERVER: Generating AES TEK for Android import ..")
         serverStorage.tekAesKeyAtServer = server.generateAesTek(TEK_KEY_SIZE_BYTES)
         log.d("SERVER: Generating AES TEK for Android import - success")
+
+        // Save the key locally for additional tests (the other button in the UI)
+        saveServerSecretKeyUseCase.execute(serverStorage.tekAesKeyAtServer.encoded)
 
         // Server key generation phase 3. Server generates TEK key metadata, which will be used by StrongBox to import the TEK key
         log.d("SERVER: Generating TEK import metadata ..")
@@ -252,43 +184,13 @@ class KeyImportUseCase @Inject constructor(
         // Android key import phase 4. Android app imports the wrapped key
         log.d("CLIENT: Importing the server wrapped key to device TEE keystore ..")
         client.importWrappedKeyFromServer(
-            asn1DerEncodedTekAndCekAtClient,
-            DomainConstants.DEVICE_TEE_WRAPPING_KEY_ALIAS,
-            DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS
+            asn1DerEncodedTekAndCekAtClient, DomainConstants.DEVICE_TEE_WRAPPING_KEY_ALIAS, DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS
         )
         log.d("CLIENT: Importing the server wrapped key to device TEE keystore - success")
     }
 
-    private fun runTestCryptTextWithTekAtServer(serverStorage: Storage.ServerSide) {
-        log.d("SERVER: Encrypting the message with TEK ..")
-        val messageTekEncryptedAtServer = server.encryptMessageWithTek(serverStorage.serverSecretMessageAtServer, serverStorage.tekAesKeyAtServer)
-        log.d("SERVER: Encrypting the message with TEK - success")
-
-        // Encode to base64
-        serverStorage.messageTekEncryptedEncodedBase64 = String(
-            Base64.encode(messageTekEncryptedAtServer), Charset.forName(BASE64_ENCODING_CHARSET_NAME)
-        )
-    }
-
-    private fun runTestDecryptTextWithImportedKeyAtClient(clientStorage: Storage.ClientSide) {
-        log.d("CLIENT: Decode the server encrypted text message from Base64 ..")
-        val messageTekEncryptedAtClient = Base64.decode(clientStorage.messageTekEncryptedEncodedBase64)
-        log.d("CLIENT: Decode the server encrypted text message from Base64 - success")
-
-        log.d("CLIENT: Decrypt the Server's text message with the imported key ..")
-        clientStorage.decryptedServerTextMessage =
-            client.decryptTextWithImportedKey(DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS, messageTekEncryptedAtClient)
-        log.d("CLIENT: Decrypt the Server's text message with the imported key - success")
-    }
-
-    private fun getKeyFinalType(clientStorage: Storage.ClientSide): KeyImportTestResult {
-        val text = "Test 1 message: ${clientStorage.decryptedServerTextMessage}"
-        return when (client.getSecretKeySecurityLevel(DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS)) {
-            CryptoClientGateway.KeySecurityLevel.TeeStrongbox -> KeyImportTestResult.SuccessHardwareTeeStrongBox(text)
-            CryptoClientGateway.KeySecurityLevel.TeeHardwareNoStrongbox -> KeyImportTestResult.SuccessHardwareTeeNoStrongbox(text)
-            CryptoClientGateway.KeySecurityLevel.TeeSoftware -> KeyImportTestResult.SuccessSoftwareTeeOnly(text)
-            CryptoClientGateway.KeySecurityLevel.Unknown -> KeyImportTestResult.SuccessTeeUnknown(text)
-        }.exhaustive
+    private fun getKeyFinalType(keyTestResult: KeyUsageTestResult): KeyImportTestResult {
+        return KeyImportTestResult.Success(keyTestResult)
     }
 
     sealed class Storage {
@@ -297,18 +199,12 @@ class KeyImportUseCase @Inject constructor(
             lateinit var wrappingRsaKeyPairAsJwk: String
             var wasGeneratedInStrongbox: Boolean = false
             lateinit var asn1DerBase64EncodedTekAndCekAtServer: String
-            lateinit var messageTekEncryptedEncodedBase64: String
-            lateinit var messageTekEncryptedJweEncodedBase64: String
-            lateinit var decryptedServerTextMessage: String
-            lateinit var decryptedServerJweMessage: String
         }
 
-        class ServerSide(val serverSecretMessageAtServer: String) : Storage() {
+        class ServerSide : Storage() {
             lateinit var asn1DerBase64EncodedTekAndCekAtServer: String
             lateinit var tekAesKeyAtServer: SecretKeySpec
             lateinit var wrappingRsaKeyPairAsJwk: String
-            lateinit var messageTekEncryptedEncodedBase64: String
-            lateinit var messageTekEncryptedJweEncodedBase64: String
         }
     }
 

@@ -31,5 +31,13 @@ class DomainException(
         fun noSuchImportedKeyFound(keyAlias: String): DomainException {
             return DomainException(ErrorCode.NO_SUCH_IMPORTED_KEY_FOUND, keyAlias)
         }
+
+        fun noSuchServerKeyFound(keyAlias: String): DomainException {
+            return DomainException(ErrorCode.NO_SUCH_SERVER_KEY_FOUND, keyAlias)
+        }
+
+        fun decryptedMessageDoesNotMatchTheOriginalMessage(message: String): DomainException {
+            return DomainException(ErrorCode.DECRYPTED_MESSAGE_DOES_NOT_MATCH_THE_ORIGINAL_MESSAGE, message)
+        }
     }
 }

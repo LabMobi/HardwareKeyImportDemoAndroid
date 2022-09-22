@@ -6,13 +6,16 @@ import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import android.security.keystore.WrappedKeyEntry
 import androidx.annotation.RequiresApi
+import com.nimbusds.jose.EncryptionMethod
+import com.nimbusds.jose.JWEAlgorithm
+import com.nimbusds.jose.JWEHeader
 import com.nimbusds.jose.JWEObject
+import com.nimbusds.jose.Payload
 import com.nimbusds.jose.crypto.DirectDecrypter
+import com.nimbusds.jose.crypto.DirectEncrypter
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.RSAKey
-import mobi.lab.keyimportdemo.domain.entities.DomainException
 import mobi.lab.keyimportdemo.domain.gateway.CryptoClientGateway
-import java.security.Key
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
 import java.security.KeyStore
@@ -23,13 +26,8 @@ import java.security.PublicKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.AlgorithmParameterSpec
 import java.security.spec.InvalidKeySpecException
-import java.security.spec.MGF1ParameterSpec
-import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.OAEPParameterSpec
-import javax.crypto.spec.PSource
 import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import kotlin.random.Random
@@ -57,7 +55,7 @@ class CryptoClient @Inject constructor() : CryptoClientGateway {
     }
 
     @Throws(NoSuchAlgorithmException::class, NoSuchProviderException::class, InvalidKeySpecException::class)
-    override fun getSecretKeySecurityLevel(keyStoreKeyAlias: String): CryptoClientGateway.KeySecurityLevel {
+    override fun getSecretKeySecurityLevel(keyStoreKeyAlias: String): CryptoClientGateway.KeyTeeSecurityLevel {
         val keyStore: KeyStore = KeyStore.getInstance(KEY_STORE_PROVIDER_ANDROID_KEYSTORE)
         keyStore.load(null, null)
         val key: SecretKey = keyStore.getKey(keyStoreKeyAlias, null) as SecretKey
@@ -69,7 +67,7 @@ class CryptoClient @Inject constructor() : CryptoClientGateway {
     }
 
     @Throws(NoSuchAlgorithmException::class, NoSuchProviderException::class, InvalidKeySpecException::class)
-    override fun getPrivateKeySecurityLevel(keyStoreKeyAlias: String): CryptoClientGateway.KeySecurityLevel {
+    override fun getPrivateKeySecurityLevel(keyStoreKeyAlias: String): CryptoClientGateway.KeyTeeSecurityLevel {
         val keyStore: KeyStore = KeyStore.getInstance(KEY_STORE_PROVIDER_ANDROID_KEYSTORE)
         keyStore.load(null, null)
         val privateKeyEntry = keyStore.getEntry(keyStoreKeyAlias, null) as KeyStore.PrivateKeyEntry
@@ -81,60 +79,60 @@ class CryptoClient @Inject constructor() : CryptoClientGateway {
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
-    private fun getSecretKeySecurityLevelFromApi(key: SecretKey): CryptoClientGateway.KeySecurityLevel {
+    private fun getSecretKeySecurityLevelFromApi(key: SecretKey): CryptoClientGateway.KeyTeeSecurityLevel {
         val factory: SecretKeyFactory = SecretKeyFactory.getInstance(key.algorithm, KEY_STORE_PROVIDER_ANDROID_KEYSTORE)
         return when ((factory.getKeySpec(key, KeyInfo::class.java) as KeyInfo).securityLevel) {
             KeyProperties.SECURITY_LEVEL_STRONGBOX -> {
-                CryptoClientGateway.KeySecurityLevel.TeeStrongbox
+                CryptoClientGateway.KeyTeeSecurityLevel.TeeStrongbox
             }
             KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT, KeyProperties.SECURITY_LEVEL_UNKNOWN_SECURE -> {
-                CryptoClientGateway.KeySecurityLevel.TeeHardwareNoStrongbox
+                CryptoClientGateway.KeyTeeSecurityLevel.TeeHardwareNoStrongbox
             }
             KeyProperties.SECURITY_LEVEL_SOFTWARE -> {
-                CryptoClientGateway.KeySecurityLevel.TeeSoftware
+                CryptoClientGateway.KeyTeeSecurityLevel.TeeSoftware
             }
             else -> {
-                CryptoClientGateway.KeySecurityLevel.Unknown
+                CryptoClientGateway.KeyTeeSecurityLevel.Unknown
             }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
-    private fun getPrivateKeySecurityLevelFromApi(key: PrivateKey): CryptoClientGateway.KeySecurityLevel {
+    private fun getPrivateKeySecurityLevelFromApi(key: PrivateKey): CryptoClientGateway.KeyTeeSecurityLevel {
         val factory: KeyFactory = KeyFactory.getInstance(key.algorithm, KEY_STORE_PROVIDER_ANDROID_KEYSTORE)
         return when ((factory.getKeySpec(key, KeyInfo::class.java) as KeyInfo).securityLevel) {
             KeyProperties.SECURITY_LEVEL_STRONGBOX -> {
-                CryptoClientGateway.KeySecurityLevel.TeeStrongbox
+                CryptoClientGateway.KeyTeeSecurityLevel.TeeStrongbox
             }
             KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT, KeyProperties.SECURITY_LEVEL_UNKNOWN_SECURE -> {
-                CryptoClientGateway.KeySecurityLevel.TeeHardwareNoStrongbox
+                CryptoClientGateway.KeyTeeSecurityLevel.TeeHardwareNoStrongbox
             }
             KeyProperties.SECURITY_LEVEL_SOFTWARE -> {
-                CryptoClientGateway.KeySecurityLevel.TeeSoftware
+                CryptoClientGateway.KeyTeeSecurityLevel.TeeSoftware
             }
             else -> {
-                CryptoClientGateway.KeySecurityLevel.Unknown
+                CryptoClientGateway.KeyTeeSecurityLevel.Unknown
             }
         }
     }
 
-    private fun isSecureKeyInsideSecureHardwareCompat(key: SecretKey): CryptoClientGateway.KeySecurityLevel {
+    private fun isSecureKeyInsideSecureHardwareCompat(key: SecretKey): CryptoClientGateway.KeyTeeSecurityLevel {
         val factory: SecretKeyFactory = SecretKeyFactory.getInstance(key.algorithm, KEY_STORE_PROVIDER_ANDROID_KEYSTORE)
         @Suppress("DEPRECATION")
         return if ((factory.getKeySpec(key, KeyInfo::class.java) as KeyInfo).isInsideSecureHardware) {
-            CryptoClientGateway.KeySecurityLevel.TeeHardwareNoStrongbox
+            CryptoClientGateway.KeyTeeSecurityLevel.TeeHardwareNoStrongbox
         } else {
-            CryptoClientGateway.KeySecurityLevel.TeeSoftware
+            CryptoClientGateway.KeyTeeSecurityLevel.TeeSoftware
         }
     }
 
-    private fun isPrivateKeyInsideSecureHardwareCompat(key: PrivateKey): CryptoClientGateway.KeySecurityLevel {
+    private fun isPrivateKeyInsideSecureHardwareCompat(key: PrivateKey): CryptoClientGateway.KeyTeeSecurityLevel {
         val factory: KeyFactory = KeyFactory.getInstance(key.algorithm, KEY_STORE_PROVIDER_ANDROID_KEYSTORE)
         @Suppress("DEPRECATION")
         return if ((factory.getKeySpec(key, KeyInfo::class.java) as KeyInfo).isInsideSecureHardware) {
-            CryptoClientGateway.KeySecurityLevel.TeeHardwareNoStrongbox
+            CryptoClientGateway.KeyTeeSecurityLevel.TeeHardwareNoStrongbox
         } else {
-            CryptoClientGateway.KeySecurityLevel.TeeSoftware
+            CryptoClientGateway.KeyTeeSecurityLevel.TeeSoftware
         }
     }
 
@@ -157,72 +155,7 @@ class CryptoClient @Inject constructor() : CryptoClientGateway {
     }
 
     @Suppress("MagicNumber")
-    override fun decryptTextWithImportedKey(keyStoreKeyAlias: String, messageTekEncryptedAtClient: ByteArray): String {
-        val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null, null)
-        val key: SecretKey = keyStore.getKey(keyStoreKeyAlias, null) as SecretKey
-
-        val c: Cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-        // First 16 byte are iv
-        val ivPart: ByteArray = messageTekEncryptedAtClient.copyOfRange(0, 16)
-        val messagePart: ByteArray = messageTekEncryptedAtClient.copyOfRange(16, messageTekEncryptedAtClient.size)
-        val ivParamSpec = IvParameterSpec(ivPart)
-        c.init(Cipher.DECRYPT_MODE, key, ivParamSpec)
-        return String(c.doFinal(messagePart))
-    }
-
-    override fun encryptTextWithWrappingKey(keyStoreKeyAlias: String, secretMessage: String): ByteArray {
-        val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null, null)
-
-        val privateKeyEntry: KeyStore.PrivateKeyEntry? = keyStore.getEntry(keyStoreKeyAlias, null) as KeyStore.PrivateKeyEntry?
-        if (privateKeyEntry == null) {
-            throw DomainException.noSuchImportedKeyFound(keyStoreKeyAlias)
-        }
-
-        val cipher = Cipher.getInstance("RSA/ECB/OAEPPadding")
-        cipher.init(
-            Cipher.ENCRYPT_MODE,
-            privateKeyEntry.certificate.publicKey,
-            OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT)
-        )
-        return cipher.doFinal(secretMessage.toByteArray())
-    }
-
-    override fun decryptTextWithWrappingKey(keyStoreKeyAlias: String, messageTekEncryptedAtClient: ByteArray): String {
-        val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null, null)
-
-        val privateKeyEntry: KeyStore.PrivateKeyEntry? = keyStore.getEntry(keyStoreKeyAlias, null) as KeyStore.PrivateKeyEntry?
-        if (privateKeyEntry == null) {
-            throw DomainException.noSuchImportedKeyFound(keyStoreKeyAlias)
-        }
-
-        val cipher = Cipher.getInstance("RSA/ECB/OAEPPadding")
-        cipher.init(
-            Cipher.DECRYPT_MODE,
-            privateKeyEntry.privateKey,
-            OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT)
-        )
-        return String(cipher.doFinal(messageTekEncryptedAtClient))
-    }
-
-    override fun encryptTextWithImportedKey(keyStoreKeyAlias: String, secretMessage: String): ByteArray {
-        val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null, null)
-        val rawKey: Key? = keyStore.getKey(keyStoreKeyAlias, null)
-        if (rawKey == null) {
-            throw DomainException.noSuchImportedKeyFound(keyStoreKeyAlias)
-        }
-        val key: SecretKey = rawKey as SecretKey
-
-        val c: Cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-        c.init(Cipher.ENCRYPT_MODE, key)
-        return c.iv + c.doFinal(secretMessage.toByteArray())
-    }
-
-    @Suppress("MagicNumber")
-    override fun decryptJWEWithImportedWrappedKey(keyStoreKeyAlias: String, messageWrappedTekEncryptedJWE: String): String {
+    override fun decryptJWEWithImportedKey(keyStoreKeyAlias: String, messageWrappedTekEncryptedJWE: String): String {
         val keyStore: KeyStore = KeyStore.getInstance(KEY_STORE_PROVIDER_ANDROID_KEYSTORE)
         keyStore.load(null, null)
         val secretKeyEntry = keyStore.getEntry(keyStoreKeyAlias, null) as KeyStore.SecretKeyEntry
@@ -233,6 +166,26 @@ class CryptoClient @Inject constructor() : CryptoClientGateway {
         val jweObject = JWEObject.parse(messageWrappedTekEncryptedJWE)
         jweObject.decrypt(decrypter)
         return jweObject.payload.toString()
+    }
+
+    override fun encryptMessageWithTekToJWE(message: String, keyStoreKeyAlias: String): String {
+        val keyStore: KeyStore = KeyStore.getInstance(KEY_STORE_PROVIDER_ANDROID_KEYSTORE)
+        keyStore.load(null, null)
+        val secretKeyEntry = keyStore.getEntry(keyStoreKeyAlias, null) as KeyStore.SecretKeyEntry
+
+        val header = JWEHeader(JWEAlgorithm.DIR, EncryptionMethod.A256GCM)
+        // Set the message as payload plain text
+        val payload = Payload(message)
+
+        // Create the JWE object and encrypt it
+        val jweObject = JWEObject(header, payload)
+        val encrypter = DirectEncrypter(secretKeyEntry.secretKey)
+        encrypter.jcaContext.provider = keyStore.provider
+
+        jweObject.encrypt(encrypter)
+
+        // Serialise to compact JOSE form
+        return jweObject.serialize()
     }
 
     @Suppress("MagicNumber", "unused")
