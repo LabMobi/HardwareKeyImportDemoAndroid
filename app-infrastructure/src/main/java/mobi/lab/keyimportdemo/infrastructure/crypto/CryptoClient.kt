@@ -161,7 +161,7 @@ class CryptoClient @Inject constructor() : CryptoClientGateway {
         val secretKeyEntry = keyStore.getEntry(keyStoreKeyAlias, null) as KeyStore.SecretKeyEntry
 
         val decrypter = DirectDecrypter(secretKeyEntry.secretKey)
-        decrypter.jcaContext.provider = keyStore.provider
+        // Google does not recommend this: decrypter.jcaContext.provider = keyStore.provider
 
         val jweObject = JWEObject.parse(messageWrappedTekEncryptedJWE)
         jweObject.decrypt(decrypter)
@@ -180,7 +180,7 @@ class CryptoClient @Inject constructor() : CryptoClientGateway {
         // Create the JWE object and encrypt it
         val jweObject = JWEObject(header, payload)
         val encrypter = DirectEncrypter(secretKeyEntry.secretKey)
-        encrypter.jcaContext.provider = keyStore.provider
+        // Google does not recommend this: encrypter.jcaContext.provider = keyStore.provider
 
         jweObject.encrypt(encrypter)
 
