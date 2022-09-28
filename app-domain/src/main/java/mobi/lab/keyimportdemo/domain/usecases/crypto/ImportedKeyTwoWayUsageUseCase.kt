@@ -39,7 +39,7 @@ class ImportedKeyTwoWayUsageUseCase @Inject constructor(
             log.d("Testing client -> server message flow test finished")
 
             KeyUsageTestResult.UsageSuccess(
-                client.getPrivateKeySecurityLevel(DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS),
+                client.getSecretKeySecurityLevel(DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS),
                 serverToClientSecretMessageResult,
                 clientToServerSecretMessageResult
             )
