@@ -78,7 +78,11 @@ class ImportedKeyTwoWayUsageUseCase @Inject constructor(
             throw DomainException.noSuchServerKeyFound(DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS)
         }
         val keySpec = SecretKeySpec(keyBytes, "AES")
-        val encryptedSecretMessage = client.encryptMessageWithTekToJWE(secretMessage, DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS)
+        val encryptedSecretMessage = client.encryptMessageWithTekToJWE(
+            secretMessage,
+            DomainConstants.DEVICE_TEE_IMPORT_KEY_ALIAS,
+            DomainConstants.TEK_KEY_SIZE_BITS
+        )
         val resultDecryptedMessage = server.decryptJWEWithImportedKey(encryptedSecretMessage, keySpec)
         assertDecryptedMessageEqualsOriginalMessage(secretMessage, resultDecryptedMessage)
         return resultDecryptedMessage

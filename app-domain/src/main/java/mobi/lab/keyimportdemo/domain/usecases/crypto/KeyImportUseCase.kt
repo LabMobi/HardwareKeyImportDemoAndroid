@@ -130,7 +130,7 @@ class KeyImportUseCase @Inject constructor(
         // This will be the TEK key, which will be retained at the server side and which will be imported into the Android KeyStore.
 
         log.d("SERVER: Generating AES TEK for Android import ..")
-        serverStorage.tekAesKeyAtServer = server.generateAesTek(TEK_KEY_SIZE_BYTES)
+        serverStorage.tekAesKeyAtServer = server.generateAesTek(DomainConstants.TEK_KEY_SIZE_BITS)
         log.d("SERVER: Generating AES TEK for Android import - success")
 
         // Save the key locally for additional tests (the other button in the UI)
@@ -138,14 +138,14 @@ class KeyImportUseCase @Inject constructor(
 
         // Server key generation phase 3. Server generates TEK key metadata, which will be used by StrongBox to import the TEK key
         log.d("SERVER: Generating TEK import metadata ..")
-        val tekImportMetadata = server.generateTekImportMetadata(TEK_KEY_SIZE_BYTES, KEY_MASTER_ALGORITHM_AES)
+        val tekImportMetadata = server.generateTekImportMetadata(DomainConstants.TEK_KEY_SIZE_BITS, KEY_MASTER_ALGORITHM_AES)
         log.d("SERVER: Metadata = $tekImportMetadata")
         log.d("SERVER: Generating TEK import metadata - success")
 
         // Server key generation phase 4. Server generates ephemeral AES secret key.
         // This will be CEK (Content Encryption Key), which will be temporarily used to wrap the TEK and additional metadata.
         log.d("SERVER: Generating AES CEK to wrap the TEK and Metadata ..")
-        val cekAesKeyAtServer = server.generateAesCek(CEK_KEY_SIZE_BYTES)
+        val cekAesKeyAtServer = server.generateAesCek(DomainConstants.CEK_KEY_SIZE_BITS)
         log.d("SERVER: Generating AES CEK to wrap the TEK and Metadata - success")
 
         // Server key generation phase 5. Server encrypts the CEK to the RSA public key with “RSA/ECB/OAEPPadding” encryption.
@@ -209,8 +209,6 @@ class KeyImportUseCase @Inject constructor(
     }
 
     companion object {
-        private const val TEK_KEY_SIZE_BYTES = 256
-        private const val CEK_KEY_SIZE_BYTES = 256
         private const val KEY_MASTER_ALGORITHM_AES = 32
         private const val BASE64_ENCODING_CHARSET_NAME = "UTF-8"
     }

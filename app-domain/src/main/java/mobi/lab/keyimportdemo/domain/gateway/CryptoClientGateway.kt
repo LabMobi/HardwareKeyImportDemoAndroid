@@ -10,7 +10,7 @@ interface CryptoClientGateway {
     fun encodeRsaPublicKeyAsJwk(alias: String, publicKey: PublicKey): String
     fun importWrappedKeyFromServer(asn1DerEncodedWrappedKey: ByteArray, wrappingKeyAliasInKeysStore: String, wrappedKeyAlias: String)
     fun decryptJWEWithImportedKey(keyStoreKeyAlias: String, messageWrappedTekEncryptedJWE: String): String
-    fun encryptMessageWithTekToJWE(message: String, keyStoreKeyAlias: String): String
+    fun encryptMessageWithTekToJWE(message: String, keyStoreKeyAlias: String, keySizeBits: Int): String
 
     sealed class KeyTeeSecurityLevel {
         object TeeStrongbox : KeyTeeSecurityLevel() {
