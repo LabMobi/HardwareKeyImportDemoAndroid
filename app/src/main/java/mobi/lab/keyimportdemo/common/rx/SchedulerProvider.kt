@@ -5,9 +5,6 @@ import io.reactivex.rxjava3.core.MaybeTransformer
 import io.reactivex.rxjava3.core.ObservableTransformer
 import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.core.SingleTransformer
-import mobi.lab.keyimportdemo.common.platform.LogoutMonitor
-import mobi.lab.keyimportdemo.domain.entities.DomainException
-import mobi.lab.keyimportdemo.domain.entities.ErrorCode
 
 interface SchedulerProvider {
     val main: Scheduler
@@ -54,8 +51,6 @@ interface SchedulerProvider {
     }
 
     private fun checkUnauthorizedError(error: Throwable) {
-        if (error is DomainException && error.isFor(ErrorCode.LOCAL_UNAUTHORIZED)) {
-            LogoutMonitor.logout()
-        }
+        // No-OP
     }
 }
