@@ -2,6 +2,8 @@
 
 # Key Import Android Demo README
 
+<img src="img\mobilab-header-logo.png" style="zoom:25%;" />
+
 Demo app for Android hardware TEE KeyStore key import. Shows how to import a key generated at backend server to Android hardware TEE (Trusted Execution Environment ) securely.
 
 NOTE: For ease of the Demo there is no separate server component here in the project. But the "server-side" is written in such way that it is separated from the client code and has explicit handoffs between server and client. So it will be easy to move that part to an actual server and communicate via HTTPS.
